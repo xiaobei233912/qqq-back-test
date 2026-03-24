@@ -1,0 +1,210 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="面向手机和桌面端的 QQQ 与现金组合回测网页，支持定投、提取和年度再平衡。">
+  <title>QQQ Portfolio Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <div class="ambient ambient-left"></div>
+    <div class="ambient ambient-right"></div>
+
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">QQQ + Cash Backtest</p>
+        <h1>QQQ 资产配置回测实验室</h1>
+        <p class="hero-text">基于 QQQ 建立以来的完整月度复权数据，回测任意 QQQ 与现金配比，支持定投、提取、年度再平衡，并优先适配手机端。</p>
+        <div class="hero-meta">
+          <span id="datasetRange">正在加载数据…</span>
+          <span id="datasetUpdated">-</span>
+          <span id="datasetFx">-</span>
+        </div>
+      </div>
+
+      <aside class="guide-card">
+        <h2>使用说明</h2>
+        <p>先设置 QQQ 比例、起始资金和回测年份，再设置定投或提取规则。</p>
+        <p>金额显示统一用人民币符号，但回测收益路径直接使用 QQQ 原始月度收益率，不做汇率换算。</p>
+        <p>负数表示提取，系统会优先提取现金，不足时再卖出 QQQ。</p>
+        <p>修改参数后点击“运行回测”，结果区会刷新图表、指标和年度明细。</p>
+      </aside>
+    </header>
+
+    <main class="layout-grid">
+      <section class="panel controls-panel">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">配置区域</p>
+            <h2>资产组合设置</h2>
+          </div>
+          <div class="action-row">
+            <button class="primary-button" id="runBacktestButton" type="button">运行回测</button>
+            <button class="ghost-button" id="resetButton" type="button">恢复默认</button>
+          </div>
+        </div>
+
+        <div class="status-stack">
+          <p class="status-line" id="simulationNote">-</p>
+          <div class="validation-box hidden" id="validationBox"></div>
+        </div>
+
+        <div class="control-grid">
+          <div class="control-card accent-card span-2">
+            <label for="qqqRatio">QQQ 配比</label>
+            <div class="ratio-line">
+              <input id="qqqRatio" type="range" min="0" max="100" step="1" value="80">
+              <input id="qqqRatioInput" type="number" min="0" max="100" step="1" value="80" inputmode="decimal">
+            </div>
+            <div class="ratio-summary">
+              <div>
+                <span class="ratio-label">QQQ</span>
+                <strong id="qqqRatioDisplay">80%</strong>
+              </div>
+              <div>
+                <span class="ratio-label">现金</span>
+                <strong id="cashRatioDisplay">20%</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="control-card">
+            <label for="startCapital">起始资金</label>
+            <input id="startCapital" type="number" min="0" step="1000" value="100000" inputmode="decimal">
+            <small>显示单位为人民币。</small>
+          </div>
+
+          <div class="control-card">
+            <label for="annualRebalance">年度再平衡</label>
+            <select id="annualRebalance">
+              <option value="true">开启</option>
+              <option value="false">关闭</option>
+            </select>
+            <small>开启后会在每年年末恢复到目标比例。</small>
+          </div>
+
+          <div class="control-card">
+            <label for="startYear">开始时间</label>
+            <select id="startYear"></select>
+            <small>回测从所选年份的第一个可用月份开始。</small>
+          </div>
+
+          <div class="control-card">
+            <label for="endYear">结束时间</label>
+            <select id="endYear"></select>
+            <small>回测到所选年份的最后一个可用月份结束。</small>
+          </div>
+
+          <div class="control-card">
+            <label for="cashFlowAmount">定投 / 提取金额</label>
+            <input id="cashFlowAmount" type="number" step="1000" value="5000" inputmode="decimal">
+            <small>正数为定投，负数为提取。</small>
+          </div>
+
+          <div class="control-card">
+            <label for="cashFlowFrequency">频率</label>
+            <select id="cashFlowFrequency">
+              <option value="monthly">每月</option>
+              <option value="yearly">每年</option>
+            </select>
+            <small>每年频率默认在 12 月月底执行。</small>
+          </div>
+
+          <div class="control-card info-card span-2">
+            <h3>模型假设</h3>
+            <ul class="assumption-list">
+              <li>QQQ 使用 Yahoo Finance 月度复权收盘价。</li>
+              <li>金额统一显示为人民币，但收益路径不做汇率换算。</li>
+              <li>现金收益率默认按 0% 处理。</li>
+              <li>提取时优先使用现金，不足部分卖出 QQQ。</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel results-panel">
+        <div class="results-hero">
+          <div>
+            <p class="section-kicker">结果区域</p>
+            <h2>组合表现</h2>
+            <p class="results-subtext">结果区会优先展示图表和关键绩效，移动端也会给它更多空间。</p>
+          </div>
+          <div class="hero-metric-strip" id="heroMetricStrip"></div>
+        </div>
+
+        <div class="chart-shell">
+          <div class="chart-header">
+            <div>
+              <h3>组合净值曲线</h3>
+              <p>蓝线为组合总资产，虚线为累计净投入。触摸或悬停可查看月份内的资产变化。</p>
+            </div>
+            <div class="chart-legend">
+              <span><i class="legend-swatch value-line"></i>组合资产</span>
+              <span><i class="legend-swatch capital-line"></i>累计净投入</span>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <svg id="resultChart" viewBox="0 0 860 420" preserveAspectRatio="none" aria-label="回测结果图表"></svg>
+            <div class="chart-tooltip hidden" id="chartTooltip"></div>
+            <div class="empty-state hidden" id="chartEmptyState">当前参数下没有可展示的回测结果。</div>
+          </div>
+        </div>
+
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <div class="explain-grid">
+          <article class="explain-card">
+            <h3>总收益率</h3>
+            <p>按“最终资产 ÷ 初始资金 - 1”计算，不再使用净投入资本作为分母。</p>
+          </article>
+          <article class="explain-card">
+            <h3>内部收益率 IRR</h3>
+            <p>把每次定投、提取和最终资产一起纳入，反映投资者真实拿到的年化收益。</p>
+          </article>
+          <article class="explain-card">
+            <h3>最大回撤</h3>
+            <p>表示从历史峰值到最低谷的最大跌幅，用于衡量策略的痛苦程度。</p>
+          </article>
+          <article class="explain-card">
+            <h3>波动与夏普</h3>
+            <p>年化波动率反映净值波动强弱，夏普比率反映每单位波动换来的收益效率。</p>
+          </article>
+        </div>
+
+        <div class="table-panel">
+          <div class="table-head">
+            <h3>年度资产明细</h3>
+            <p>展示年度收益率、年末总资产、全年净现金流和再平衡前后持仓。</p>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>年份</th>
+                  <th>年度收益率</th>
+                  <th>年末总资产</th>
+                  <th>全年净现金流</th>
+                  <th>平衡前 QQQ</th>
+                  <th>平衡前现金</th>
+                  <th>平衡后 QQQ</th>
+                  <th>平衡后现金</th>
+                </tr>
+              </thead>
+              <tbody id="yearTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="./data/qqq-history.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,10 @@
+.cache/
+.cache2/
+.cache3/
+.cache4/
+.cache5/
+site/
+data/qqq-monthly.js
+dom-snapshot*.html
+probe*.html
+scenario*.html
