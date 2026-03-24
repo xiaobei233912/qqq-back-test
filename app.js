@@ -51,7 +51,7 @@
   const defaultState = {
     qqqRatio: 80,
     startCapital: 100000,
-    cashFlowAmount: 5000,
+    cashFlowAmount: 0,
     cashFlowFrequency: "monthly",
     annualRebalance: "true",
   };
@@ -473,8 +473,8 @@
 
     elements.chartEmptyState.classList.add("hidden");
     const width = 860;
-    const height = 420;
-    const margin = { top: 24, right: 20, bottom: 48, left: 78 };
+    const height = 500;
+    const margin = { top: 28, right: 22, bottom: 72, left: 104 };
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
     const values = points.flatMap((point) => [point.value, point.netContribution]);
@@ -517,13 +517,21 @@
       ${yTicks.map((tick) => `
         <g>
           <line x1="${margin.left}" y1="${tick.y}" x2="${width - margin.right}" y2="${tick.y}" stroke="rgba(88, 63, 31, 0.08)" stroke-dasharray="4 6"></line>
-          <text x="${margin.left - 14}" y="${tick.y + 4}" text-anchor="end" fill="rgba(110, 91, 74, 0.95)" font-size="12">${formatCompactCurrency(tick.value)}</text>
+          <text x="${margin.left - 16}" y="${tick.y + 7}" text-anchor="end" fill="rgba(110, 91, 74, 0.95)" font-size="22" font-weight="700">${formatCompactCurrency(tick.value)}</text>
         </g>
       `).join("")}
-      ${xLabels.map((tick) => `<text x="${tick.x}" y="${height - 16}" text-anchor="middle" fill="rgba(110, 91, 74, 0.95)" font-size="12">${tick.label}</text>`).join("")}
+      <line x1="${margin.left}" y1="${height - margin.bottom}" x2="${width - margin.right}" y2="${height - margin.bottom}" stroke="rgba(88, 63, 31, 0.18)"></line>
+      ${xLabels.map((tick) => `<text x="${tick.x}" y="${height - 24}" text-anchor="middle" fill="rgba(110, 91, 74, 0.95)" font-size="20" font-weight="700">${tick.label}</text>`).join("")}
       <path d="${valuePath} L ${xAt(points.length - 1)} ${height - margin.bottom} L ${xAt(0)} ${height - margin.bottom} Z" fill="url(#portfolioGradient)"></path>
       <path d="${contributionPath}" fill="none" stroke="#0f766e" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="8 8"></path>
       <path d="${valuePath}" fill="none" stroke="#0a4f8f" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"></path>
+      <g id="focusLayer" class="focus-layer hidden">
+        <line id="focusLine" x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${height - margin.bottom}" stroke="rgba(10, 79, 143, 0.28)" stroke-width="2" stroke-dasharray="6 6"></line>
+        <circle id="focusValueDotOuter" cx="${margin.left}" cy="${margin.top}" r="11" fill="rgba(10, 79, 143, 0.18)"></circle>
+        <circle id="focusValueDot" cx="${margin.left}" cy="${margin.top}" r="6.5" fill="#0a4f8f" stroke="#ffffff" stroke-width="2"></circle>
+        <circle id="focusCapitalDotOuter" cx="${margin.left}" cy="${margin.top}" r="10" fill="rgba(15, 118, 110, 0.16)"></circle>
+        <circle id="focusCapitalDot" cx="${margin.left}" cy="${margin.top}" r="5.5" fill="#0f766e" stroke="#ffffff" stroke-width="2"></circle>
+      </g>
       <g>${hoverTargets}</g>
     `;
 
@@ -532,14 +540,22 @@
 
   function bindChartHover(points, xAt, yAt, width, height) {
     const hoverZones = elements.chart.querySelectorAll(".hover-zone");
+    const focusLayer = elements.chart.querySelector("#focusLayer");
+    const focusLine = elements.chart.querySelector("#focusLine");
+    const focusValueDot = elements.chart.querySelector("#focusValueDot");
+    const focusValueDotOuter = elements.chart.querySelector("#focusValueDotOuter");
+    const focusCapitalDot = elements.chart.querySelector("#focusCapitalDot");
+    const focusCapitalDotOuter = elements.chart.querySelector("#focusCapitalDotOuter");
 
     hoverZones.forEach((zone) => {
       zone.addEventListener("pointerenter", handlePointer);
       zone.addEventListener("pointermove", handlePointer);
+      zone.addEventListener("pointerdown", handlePointer);
     });
 
     elements.chart.addEventListener("pointerleave", () => {
       elements.tooltip.classList.add("hidden");
+      focusLayer.classList.add("hidden");
     });
 
     function handlePointer(event) {
@@ -550,6 +566,21 @@
       const scaleY = chartRect.height / height;
       const left = Math.min(chartRect.width - 190, xAt(index) * scaleX + 18);
       const top = Math.max(12, yAt(point.value) * scaleY - 18);
+      const valueY = yAt(point.value);
+      const contributionY = yAt(point.netContribution);
+      const x = xAt(index);
+
+      focusLayer.classList.remove("hidden");
+      focusLine.setAttribute("x1", x);
+      focusLine.setAttribute("x2", x);
+      focusValueDot.setAttribute("cx", x);
+      focusValueDot.setAttribute("cy", valueY);
+      focusValueDotOuter.setAttribute("cx", x);
+      focusValueDotOuter.setAttribute("cy", valueY);
+      focusCapitalDot.setAttribute("cx", x);
+      focusCapitalDot.setAttribute("cy", contributionY);
+      focusCapitalDotOuter.setAttribute("cx", x);
+      focusCapitalDotOuter.setAttribute("cy", contributionY);
 
       elements.tooltip.innerHTML = `
         <strong>${point.date}</strong><br>

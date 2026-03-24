@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="面向手机和桌面端的 QQQ 与现金组合回测网页，支持定投、提取和年度再平衡。">
-  <title>QQQ Portfolio Lab</title>
+  <meta name="description" content="面向手机和桌面端的纳指与现金组合回测网页，支持定投、提取和年度再平衡。">
+  <title>纳指 Portfolio Lab</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
@@ -17,9 +17,9 @@
 
     <header class="hero">
       <div class="hero-copy">
-        <p class="eyebrow">QQQ + Cash Backtest</p>
-        <h1>QQQ 资产配置回测实验室</h1>
-        <p class="hero-text">基于 QQQ 建立以来的完整月度复权数据，回测任意 QQQ 与现金配比，支持定投、提取、年度再平衡，并优先适配手机端。</p>
+        <p class="eyebrow">纳指 + Cash Backtest</p>
+        <h1>纳指资产配置回测实验室</h1>
+        <p class="hero-text">基于纳指 ETF 建立以来的完整月度复权数据，回测任意纳指与现金配比，支持定投、提取、年度再平衡，并优先适配手机端。</p>
         <div class="hero-meta">
           <span id="datasetRange">正在加载数据…</span>
           <span id="datasetUpdated">-</span>
@@ -29,9 +29,9 @@
 
       <aside class="guide-card">
         <h2>使用说明</h2>
-        <p>先设置 QQQ 比例、起始资金和回测年份，再设置定投或提取规则。</p>
-        <p>金额显示统一用人民币符号，但回测收益路径直接使用 QQQ 原始月度收益率，不做汇率换算。</p>
-        <p>负数表示提取，系统会优先提取现金，不足时再卖出 QQQ。</p>
+        <p>先设置纳指比例、起始资金和回测年份，再设置定投或提取规则。</p>
+        <p>金额显示统一用人民币符号，但回测收益路径直接使用纳指原始月度收益率，不做汇率换算。</p>
+        <p>负数表示提取，系统会优先提取现金，不足时再卖出纳指。</p>
         <p>修改参数后点击“运行回测”，结果区会刷新图表、指标和年度明细。</p>
       </aside>
     </header>
@@ -56,14 +56,14 @@
 
         <div class="control-grid">
           <div class="control-card accent-card span-2">
-            <label for="qqqRatio">QQQ 配比</label>
+            <label for="qqqRatio">纳指配比</label>
             <div class="ratio-line">
               <input id="qqqRatio" type="range" min="0" max="100" step="1" value="80">
               <input id="qqqRatioInput" type="number" min="0" max="100" step="1" value="80" inputmode="decimal">
             </div>
             <div class="ratio-summary">
               <div>
-                <span class="ratio-label">QQQ</span>
+                <span class="ratio-label">纳指</span>
                 <strong id="qqqRatioDisplay">80%</strong>
               </div>
               <div>
@@ -102,7 +102,7 @@
 
           <div class="control-card">
             <label for="cashFlowAmount">定投 / 提取金额</label>
-            <input id="cashFlowAmount" type="number" step="1000" value="5000" inputmode="decimal">
+            <input id="cashFlowAmount" type="number" step="1000" value="0" inputmode="decimal">
             <small>正数为定投，负数为提取。</small>
           </div>
 
@@ -118,10 +118,10 @@
           <div class="control-card info-card span-2">
             <h3>模型假设</h3>
             <ul class="assumption-list">
-              <li>QQQ 使用 Yahoo Finance 月度复权收盘价。</li>
+              <li>纳指使用 Yahoo Finance 月度复权收盘价。</li>
               <li>金额统一显示为人民币，但收益路径不做汇率换算。</li>
               <li>现金收益率默认按 0% 处理。</li>
-              <li>提取时优先使用现金，不足部分卖出 QQQ。</li>
+              <li>提取时优先使用现金，不足部分卖出纳指。</li>
             </ul>
           </div>
         </div>
@@ -141,7 +141,7 @@
           <div class="chart-header">
             <div>
               <h3>组合净值曲线</h3>
-              <p>蓝线为组合总资产，虚线为累计净投入。触摸或悬停可查看月份内的资产变化。</p>
+              <p>蓝线为组合总资产，虚线为累计净投入。触摸或悬停可查看具体月份、焦点指示线和对应资产变化。</p>
             </div>
             <div class="chart-legend">
               <span><i class="legend-swatch value-line"></i>组合资产</span>
@@ -149,7 +149,7 @@
             </div>
           </div>
           <div class="chart-wrap">
-            <svg id="resultChart" viewBox="0 0 860 420" preserveAspectRatio="none" aria-label="回测结果图表"></svg>
+            <svg id="resultChart" viewBox="0 0 860 500" aria-label="回测结果图表"></svg>
             <div class="chart-tooltip hidden" id="chartTooltip"></div>
             <div class="empty-state hidden" id="chartEmptyState">当前参数下没有可展示的回测结果。</div>
           </div>
@@ -189,9 +189,9 @@
                   <th>年度收益率</th>
                   <th>年末总资产</th>
                   <th>全年净现金流</th>
-                  <th>平衡前 QQQ</th>
+                  <th>平衡前纳指</th>
                   <th>平衡前现金</th>
-                  <th>平衡后 QQQ</th>
+                  <th>平衡后纳指</th>
                   <th>平衡后现金</th>
                 </tr>
               </thead>
