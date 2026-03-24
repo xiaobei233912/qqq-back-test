@@ -115,12 +115,18 @@
             <small>每年频率默认在 12 月月底执行。</small>
           </div>
 
+          <div class="control-card">
+            <label for="cashYield">现金年化收益率</label>
+            <input id="cashYield" type="number" step="0.1" value="0" inputmode="decimal">
+            <small>输入年化百分比，例如 2 表示 2%。</small>
+          </div>
+
           <div class="control-card info-card span-2">
             <h3>模型假设</h3>
             <ul class="assumption-list">
               <li>纳指使用 Yahoo Finance 月度复权收盘价。</li>
               <li>金额统一显示为人民币，但收益路径不做汇率换算。</li>
-              <li>现金收益率默认按 0% 处理。</li>
+              <li>现金部分支持自定义年化收益率，并按月复利计入。</li>
               <li>提取时优先使用现金，不足部分卖出纳指。</li>
             </ul>
           </div>
@@ -173,6 +179,10 @@
           <article class="explain-card">
             <h3>波动与夏普</h3>
             <p>年化波动率反映净值波动强弱，夏普比率反映每单位波动换来的收益效率。</p>
+          </article>
+          <article class="explain-card">
+            <h3>现金收益处理</h3>
+            <p>现金部分按你设置的年化收益率折算为月度复利，和纳指仓位一起进入组合收益计算。</p>
           </article>
         </div>
 

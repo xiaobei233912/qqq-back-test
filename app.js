@@ -29,6 +29,7 @@
     endYear: document.querySelector("#endYear"),
     cashFlowAmount: document.querySelector("#cashFlowAmount"),
     cashFlowFrequency: document.querySelector("#cashFlowFrequency"),
+    cashYield: document.querySelector("#cashYield"),
     annualRebalance: document.querySelector("#annualRebalance"),
     runButton: document.querySelector("#runBacktestButton"),
     resetButton: document.querySelector("#resetButton"),
@@ -53,6 +54,7 @@
     startCapital: 100000,
     cashFlowAmount: 0,
     cashFlowFrequency: "monthly",
+    cashYield: 0,
     annualRebalance: "true",
   };
 
@@ -87,6 +89,7 @@
     controls.startCapital.value = String(mergedState.startCapital);
     controls.cashFlowAmount.value = String(mergedState.cashFlowAmount);
     controls.cashFlowFrequency.value = mergedState.cashFlowFrequency;
+    controls.cashYield.value = String(mergedState.cashYield ?? 0);
     controls.annualRebalance.value = mergedState.annualRebalance;
     controls.startYear.innerHTML = availableYears.map((year) => `<option value="${year}">${year} 年</option>`).join("");
     controls.endYear.innerHTML = availableYears.map((year) => `<option value="${year}">${year} 年</option>`).join("");
@@ -119,6 +122,7 @@
       controls.endYear,
       controls.cashFlowAmount,
       controls.cashFlowFrequency,
+      controls.cashYield,
       controls.annualRebalance,
     ].forEach((control) => {
       control.addEventListener("input", () => setDirtyState(true));
@@ -178,6 +182,7 @@
       endDate: yearBounds.get(endYear).endDate,
       cashFlowAmount: Number(controls.cashFlowAmount.value) || 0,
       cashFlowFrequency: controls.cashFlowFrequency.value,
+      cashYieldAnnual: (Number(controls.cashYield.value) || 0) / 100,
       annualRebalance: controls.annualRebalance.value === "true",
     };
   }
@@ -199,6 +204,10 @@
 
     if (!["monthly", "yearly"].includes(config.cashFlowFrequency)) {
       messages.push("现金流频率设置无效。");
+    }
+
+    if (!Number.isFinite(config.cashYieldAnnual) || config.cashYieldAnnual <= -1) {
+      messages.push("现金年化收益率必须大于 -100%。");
     }
 
     return messages;
@@ -254,12 +263,14 @@
     let currentValue = config.startCapital;
     let depletedAt = null;
     let yearState = createYearState();
+    const cashMonthlyRate = monthlyRateFromAnnual(config.cashYieldAnnual);
 
     timeline.push({ date: startRecord.date, value: currentValue, netContribution: cumulativeNetContribution, drawdown: 0 });
 
     for (let index = startIndex + 1; index <= endIndex; index += 1) {
       const record = records[index];
       const monthStartValue = currentValue;
+      cash = cash * (1 + cashMonthlyRate);
       const qqqValueBeforeFlow = qqqUnits * record.price;
       const cashValueBeforeFlow = cash;
       const portfolioBeforeFlow = qqqValueBeforeFlow + cashValueBeforeFlow;
@@ -353,6 +364,11 @@
 
   function createYearState() {
     return { netFlow: 0, compoundedReturn: 1 };
+  }
+
+  function monthlyRateFromAnnual(annualRate) {
+    if (!Number.isFinite(annualRate)) return 0;
+    return (1 + annualRate) ** (1 / 12) - 1;
   }
 
   function getScheduledFlow(record, amount, frequency) {
@@ -719,6 +735,7 @@
       endYear: config.endYear,
       cashFlowAmount: config.cashFlowAmount,
       cashFlowFrequency: config.cashFlowFrequency,
+      cashYield: config.cashYieldAnnual * 100,
       annualRebalance: String(config.annualRebalance),
     }));
   }
