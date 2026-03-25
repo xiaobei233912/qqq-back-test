@@ -117,11 +117,31 @@ tbody tr:last-child td { border-bottom: none; }
 }
 
 @media (max-width: 759px) {
+  .page-shell { padding-left: 10px; padding-right: 10px; }
+  .panel { padding: 16px 14px; }
   .section-head, .chart-header, .table-head, .results-hero { flex-direction: column; }
   .action-row, .hero-metric-strip { width: 100%; }
   .primary-button, .ghost-button { flex: 1 1 0; }
   .desktop-actions { display: none; }
   .mobile-actions { display: flex; }
   .span-2 { grid-column: auto; }
-  #resultChart { min-height: 0; }
+  .results-panel { padding-left: 10px; padding-right: 10px; }
+  .chart-shell {
+    margin-left: -6px;
+    margin-right: -6px;
+    padding: 16px 10px 14px;
+    border-radius: 22px;
+  }
+  .chart-header { gap: 10px; }
+  .chart-header p { margin-right: 2px; }
+  .chart-legend { gap: 8px 14px; }
+  .chart-wrap { margin-top: 12px; }
+  #resultChart {
+    min-height: 0;
+    aspect-ratio: 860 / 560;
+  }
+  .chart-tooltip {
+    max-width: 200px;
+    padding: 10px 12px;
+  }
 }
