@@ -490,7 +490,8 @@
     elements.chartEmptyState.classList.add("hidden");
     const width = 860;
     const height = 500;
-    const margin = { top: 28, right: 22, bottom: 72, left: 104 };
+    const isMobile = window.innerWidth < 760;
+    const margin = { top: 28, right: 28, bottom: 72, left: isMobile ? 128 : 120 };
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
     const values = points.flatMap((point) => [point.value, point.netContribution]);
@@ -500,7 +501,6 @@
     const yMax = maxValue * 1.08;
     const yRange = yMax - yMin || 1;
     const xStep = innerWidth / Math.max(points.length - 1, 1);
-    const hoverWidth = Math.max(xStep, 14);
 
     const xAt = (index) => margin.left + xStep * index;
     const yAt = (value) => margin.top + innerHeight - ((value - yMin) / yRange) * innerHeight;
@@ -508,19 +508,18 @@
     const valuePath = points.map((point, index) => `${index === 0 ? "M" : "L"} ${xAt(index).toFixed(2)} ${yAt(point.value).toFixed(2)}`).join(" ");
     const contributionPath = points.map((point, index) => `${index === 0 ? "M" : "L"} ${xAt(index).toFixed(2)} ${yAt(point.netContribution).toFixed(2)}`).join(" ");
 
-    const yTicks = Array.from({ length: 5 }, (_, index) => {
-      const value = yMin + (yRange * index) / 4;
+    const yTickCount = 5;
+    const xTickCount = Math.min(isMobile ? 4 : 5, points.length);
+
+    const yTicks = Array.from({ length: yTickCount }, (_, index) => {
+      const value = yMin + (yRange * index) / (yTickCount - 1);
       return { value, y: yAt(value) };
     });
 
-    const xLabels = Array.from({ length: Math.min(5, points.length) }, (_, index) => {
-      const pointIndex = Math.round((index * (points.length - 1)) / Math.max(Math.min(5, points.length) - 1, 1));
-      return { label: points[pointIndex].date, x: xAt(pointIndex) };
+    const xLabels = Array.from({ length: xTickCount }, (_, index) => {
+      const pointIndex = Math.round((index * (points.length - 1)) / Math.max(xTickCount - 1, 1));
+      return { label: formatXAxisLabel(points[pointIndex].date, isMobile), x: xAt(pointIndex) };
     });
-
-    const hoverTargets = points.map((point, index) => `
-      <rect class="hover-zone" data-index="${index}" x="${Math.max(margin.left, xAt(index) - hoverWidth / 2)}" y="${margin.top}" width="${hoverWidth}" height="${innerHeight}" fill="transparent"></rect>
-    `).join("");
 
     elements.chart.innerHTML = `
       <defs>
@@ -532,12 +531,13 @@
       <rect x="0" y="0" width="${width}" height="${height}" rx="26" fill="rgba(255,255,255,0.42)"></rect>
       ${yTicks.map((tick) => `
         <g>
-          <line x1="${margin.left}" y1="${tick.y}" x2="${width - margin.right}" y2="${tick.y}" stroke="rgba(88, 63, 31, 0.08)" stroke-dasharray="4 6"></line>
-          <text x="${margin.left - 16}" y="${tick.y + 7}" text-anchor="end" fill="rgba(110, 91, 74, 0.95)" font-size="22" font-weight="700">${formatCompactCurrency(tick.value)}</text>
+          <line x1="${margin.left}" y1="${tick.y}" x2="${width - margin.right}" y2="${tick.y}" stroke="rgba(88, 63, 31, 0.12)" stroke-dasharray="4 10"></line>
+          <text x="${margin.left - 18}" y="${tick.y + 7}" text-anchor="end" fill="rgba(110, 91, 74, 0.9)" font-size="${isMobile ? 19 : 20}" font-weight="700">${formatCompactCurrency(tick.value)}</text>
         </g>
       `).join("")}
+      ${xLabels.map((tick) => `<line x1="${tick.x}" y1="${margin.top}" x2="${tick.x}" y2="${height - margin.bottom}" stroke="rgba(88, 63, 31, 0.08)" stroke-dasharray="4 12"></line>`).join("")}
       <line x1="${margin.left}" y1="${height - margin.bottom}" x2="${width - margin.right}" y2="${height - margin.bottom}" stroke="rgba(88, 63, 31, 0.18)"></line>
-      ${xLabels.map((tick) => `<text x="${tick.x}" y="${height - 24}" text-anchor="middle" fill="rgba(110, 91, 74, 0.95)" font-size="20" font-weight="700">${tick.label}</text>`).join("")}
+      ${xLabels.map((tick) => `<text x="${tick.x}" y="${height - 24}" text-anchor="middle" fill="rgba(110, 91, 74, 0.95)" font-size="${isMobile ? 18 : 20}" font-weight="700">${tick.label}</text>`).join("")}
       <path d="${valuePath} L ${xAt(points.length - 1)} ${height - margin.bottom} L ${xAt(0)} ${height - margin.bottom} Z" fill="url(#portfolioGradient)"></path>
       <path d="${contributionPath}" fill="none" stroke="#0f766e" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="8 8"></path>
       <path d="${valuePath}" fill="none" stroke="#0a4f8f" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -548,42 +548,78 @@
         <circle id="focusCapitalDotOuter" cx="${margin.left}" cy="${margin.top}" r="10" fill="rgba(15, 118, 110, 0.16)"></circle>
         <circle id="focusCapitalDot" cx="${margin.left}" cy="${margin.top}" r="5.5" fill="#0f766e" stroke="#ffffff" stroke-width="2"></circle>
       </g>
-      <g>${hoverTargets}</g>
     `;
 
-    bindChartHover(points, xAt, yAt, width, height);
+    bindChartHover(points, xAt, yAt, width, height, margin, innerWidth);
   }
 
-  function bindChartHover(points, xAt, yAt, width, height) {
-    const hoverZones = elements.chart.querySelectorAll(".hover-zone");
+  function bindChartHover(points, xAt, yAt, width, height, margin, innerWidth) {
     const focusLayer = elements.chart.querySelector("#focusLayer");
     const focusLine = elements.chart.querySelector("#focusLine");
     const focusValueDot = elements.chart.querySelector("#focusValueDot");
     const focusValueDotOuter = elements.chart.querySelector("#focusValueDotOuter");
     const focusCapitalDot = elements.chart.querySelector("#focusCapitalDot");
     const focusCapitalDotOuter = elements.chart.querySelector("#focusCapitalDotOuter");
+    let activePointerId = null;
 
-    hoverZones.forEach((zone) => {
-      zone.addEventListener("pointerenter", handlePointer);
-      zone.addEventListener("pointermove", handlePointer);
-      zone.addEventListener("pointerdown", handlePointer);
-    });
+    elements.chart.onpointerdown = null;
+    elements.chart.onpointermove = null;
+    elements.chart.onpointerleave = null;
+    elements.chart.onpointerup = null;
+    elements.chart.onpointercancel = null;
 
-    elements.chart.addEventListener("pointerleave", () => {
+    elements.chart.addEventListener("pointerdown", handlePointerDown);
+    elements.chart.addEventListener("pointermove", handlePointerMove);
+    elements.chart.addEventListener("pointerleave", handlePointerLeave);
+    elements.chart.addEventListener("pointerup", handlePointerUp);
+    elements.chart.addEventListener("pointercancel", handlePointerUp);
+
+    function handlePointerDown(event) {
+      activePointerId = event.pointerId;
+      if (elements.chart.setPointerCapture) {
+        elements.chart.setPointerCapture(event.pointerId);
+      }
+      updateFocusFromEvent(event);
+    }
+
+    function handlePointerMove(event) {
+      if (event.pointerType === "mouse" || activePointerId === event.pointerId) {
+        updateFocusFromEvent(event);
+      }
+    }
+
+    function handlePointerLeave(event) {
+      if (event.pointerType !== "mouse") return;
       elements.tooltip.classList.add("hidden");
       focusLayer.classList.add("hidden");
-    });
+    }
 
-    function handlePointer(event) {
-      const index = Number(event.currentTarget.dataset.index);
-      const point = points[index];
+    function handlePointerUp(event) {
+      if (activePointerId === event.pointerId) {
+        activePointerId = null;
+        if (elements.chart.releasePointerCapture && elements.chart.hasPointerCapture(event.pointerId)) {
+          elements.chart.releasePointerCapture(event.pointerId);
+        }
+        if (event.pointerType !== "mouse") {
+          elements.tooltip.classList.add("hidden");
+          focusLayer.classList.add("hidden");
+        }
+      }
+    }
+
+    function updateFocusFromEvent(event) {
       const chartRect = elements.chart.getBoundingClientRect();
+      const relativeX = ((event.clientX - chartRect.left) / chartRect.width) * width;
+      const clampedX = Math.max(margin.left, Math.min(width - margin.right, relativeX));
+      const ratio = innerWidth > 0 ? (clampedX - margin.left) / innerWidth : 0;
+      const index = Math.max(0, Math.min(points.length - 1, Math.round(ratio * (points.length - 1))));
+      const selectedPoint = points[index];
       const scaleX = chartRect.width / width;
       const scaleY = chartRect.height / height;
       const left = Math.min(chartRect.width - 190, xAt(index) * scaleX + 18);
-      const top = Math.max(12, yAt(point.value) * scaleY - 18);
-      const valueY = yAt(point.value);
-      const contributionY = yAt(point.netContribution);
+      const top = Math.max(12, yAt(selectedPoint.value) * scaleY - 18);
+      const valueY = yAt(selectedPoint.value);
+      const contributionY = yAt(selectedPoint.netContribution);
       const x = xAt(index);
 
       focusLayer.classList.remove("hidden");
@@ -599,10 +635,10 @@
       focusCapitalDotOuter.setAttribute("cy", contributionY);
 
       elements.tooltip.innerHTML = `
-        <strong>${point.date}</strong><br>
-        组合资产：${formatCurrency(point.value)}<br>
-        累计净投入：${formatCurrency(point.netContribution)}<br>
-        回撤：${formatPercent(point.drawdown)}
+        <strong>${selectedPoint.date}</strong><br>
+        组合资产：${formatCurrency(selectedPoint.value)}<br>
+        累计净投入：${formatCurrency(selectedPoint.netContribution)}<br>
+        回撤：${formatPercent(selectedPoint.drawdown)}
       `;
       elements.tooltip.classList.remove("hidden");
       elements.tooltip.style.left = `${left}px`;
@@ -693,12 +729,19 @@
 
   function formatCompactCurrency(value) {
     if (!Number.isFinite(value)) return "N/A";
-    return new Intl.NumberFormat("zh-CN", {
-      style: "currency",
-      currency: "CNY",
-      notation: "compact",
-      maximumFractionDigits: 1,
-    }).format(value);
+    const absolute = Math.abs(value);
+    if (absolute >= 1e8) {
+      return `${value < 0 ? "-" : ""}¥${Math.round(absolute / 1e8)}亿`;
+    }
+    if (absolute >= 1e4) {
+      return `${value < 0 ? "-" : ""}¥${Math.round(absolute / 1e4)}万`;
+    }
+    return `${value < 0 ? "-" : ""}¥${Math.round(absolute)}`;
+  }
+
+  function formatXAxisLabel(date, isMobile) {
+    if (!isMobile) return date;
+    return date.slice(0, 4);
   }
 
   function formatPercent(value) {
