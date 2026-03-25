@@ -51,6 +51,7 @@ h3 { font-size: 1.02rem; }
 .controls-panel, .results-panel { min-width: 0; }
 .section-head, .chart-header, .table-head, .results-hero { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .action-row { display: flex; flex-wrap: wrap; gap: 10px; }
+.mobile-actions { display: none; margin-top: 18px; }
 .primary-button, .ghost-button { border-radius: 999px; cursor: pointer; }
 .primary-button { padding: 10px 16px; border: none; background: linear-gradient(135deg, #0a4f8f, #0f766e); color: #fff; font-weight: 700; box-shadow: 0 12px 28px rgba(10, 79, 143, 0.22); }
 .primary-button.ready { box-shadow: 0 16px 34px rgba(15, 118, 110, 0.28); }
@@ -119,6 +120,8 @@ tbody tr:last-child td { border-bottom: none; }
   .section-head, .chart-header, .table-head, .results-hero { flex-direction: column; }
   .action-row, .hero-metric-strip { width: 100%; }
   .primary-button, .ghost-button { flex: 1 1 0; }
+  .desktop-actions { display: none; }
+  .mobile-actions { display: flex; }
   .span-2 { grid-column: auto; }
   #resultChart { min-height: 0; }
 }

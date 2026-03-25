@@ -43,7 +43,7 @@
             <p class="section-kicker">配置区域</p>
             <h2>资产组合设置</h2>
           </div>
-          <div class="action-row">
+          <div class="action-row desktop-actions">
             <button class="primary-button" id="runBacktestButton" type="button">运行回测</button>
             <button class="ghost-button" id="resetButton" type="button">恢复默认</button>
           </div>
@@ -102,7 +102,7 @@
 
           <div class="control-card">
             <label for="cashFlowAmount">定投 / 提取金额</label>
-            <input id="cashFlowAmount" type="number" step="1000" value="0" inputmode="decimal">
+            <input id="cashFlowAmount" type="text" value="0" inputmode="text" enterkeyhint="done">
             <small>正数为定投，负数为提取。</small>
           </div>
 
@@ -130,6 +130,11 @@
               <li>提取时优先使用现金，不足部分卖出纳指。</li>
             </ul>
           </div>
+        </div>
+
+        <div class="action-row mobile-actions">
+          <button class="primary-button" id="runBacktestButtonMobile" type="button">运行回测</button>
+          <button class="ghost-button" id="resetButtonMobile" type="button">恢复默认</button>
         </div>
       </section>
 

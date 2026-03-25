@@ -32,7 +32,9 @@
     cashYield: document.querySelector("#cashYield"),
     annualRebalance: document.querySelector("#annualRebalance"),
     runButton: document.querySelector("#runBacktestButton"),
+    runButtonMobile: document.querySelector("#runBacktestButtonMobile"),
     resetButton: document.querySelector("#resetButton"),
+    resetButtonMobile: document.querySelector("#resetButtonMobile"),
   };
 
   const elements = {
@@ -129,11 +131,16 @@
       control.addEventListener("change", () => setDirtyState(true));
     });
 
-    controls.runButton.addEventListener("click", runSimulation);
-    controls.resetButton.addEventListener("click", () => {
+    [controls.runButton, controls.runButtonMobile].filter(Boolean).forEach((button) => {
+      button.addEventListener("click", runSimulation);
+    });
+
+    [controls.resetButton, controls.resetButtonMobile].filter(Boolean).forEach((button) => {
+      button.addEventListener("click", () => {
       localStorage.removeItem(storageKey);
       initializeControls();
       runSimulation();
+    });
     });
   }
 
@@ -215,10 +222,10 @@
 
   function setDirtyState(isDirty) {
     if (isDirty) {
-      controls.runButton.classList.add("ready");
+      [controls.runButton, controls.runButtonMobile].filter(Boolean).forEach((button) => button.classList.add("ready"));
       elements.simulationNote.textContent = "参数已修改，点击“运行回测”更新结果。";
     } else {
-      controls.runButton.classList.remove("ready");
+      [controls.runButton, controls.runButtonMobile].filter(Boolean).forEach((button) => button.classList.remove("ready"));
     }
   }
 
